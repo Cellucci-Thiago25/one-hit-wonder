@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Historial de discos</title>
+  <style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
+
+/* =============================================
+   VARIABLES GLOBALES
+   ============================================= */
+:root {
+  --naranja: #D45E2A;
+  --naranja-claro: #E8896A;
+  --naranja-oscuro: #B84D1F;
+  --beige: #F2EDE4;
+  --beige-osc: #E8E0D4;
+  --beige-borde: #DDD8CE;
+  --negro: #1A1A1A;
+  --texto-principal: #1A1A1A;
+  --texto-secundario: #6A6460;
+  --texto-terciario: #A09890;
+  --texto-muted: #C4BDB5;
+  --radio: 20px;
+  --radio-lg: 28px;
+}
+
+/* =============================================
+   RESET & BASE
+   ============================================= */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: 'Inter', sans-serif;
+  background: var(--naranja);
+  color: var(--texto-principal);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* =============================================
+   LAYOUT PRINCIPAL
+   ============================================= */
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--naranja);
+  padding: 12px;
+  gap: 10px;
+}
+
+/* =============================================
+   NAVEGACIÓN
+   ============================================= */
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--negro);
+  border-radius: var(--radio);
+}
+
+.nav-brand {
+  font-family: 'Playfair Display', serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--beige);
+  letter-spacing: 0.5px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 4px;
+}
+
+.nav-link {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--texto-terciario);
+  text-decoration: none;
+  padding: 6px 14px;
+  border-radius: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: all 0.2s;
+}
+
+.nav-link:hover { color: var(--beige); background: rgba(255,255,255,0.06); }
+.nav-link.active { background: var(--naranja); color: white; }
+
+/* =============================================
+   PANELS / CARDS
+   ============================================= */
+.panel {
+  background: var(--beige);
+  border-radius: var(--radio);
+  padding: 14px;
+}
+
+.panel-dark {
+  background: var(--beige);
+  border: 2.5px solid var(--negro);
+  border-radius: var(--radio);
+  padding: 14px;
+}
+
+.panel-warm {
+  background: var(--beige);
+  border: 2.5px solid var(--naranja);
+  border-radius: var(--radio);
+  padding: 14px;
+}
+
+.panel-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--negro);
+  margin-bottom: 10px;
+}
+
+/* =============================================
+   STATS ROW
+   ============================================= */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.stat {
+  background: var(--beige);
+  border-radius: 14px;
+  padding: 10px 14px;
+}
+
+.stat-label {
+  font-size: 8px;
+  font-weight: 500;
+  color: var(--texto-terciario);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.stat-val {
+  font-family: 'Playfair Display', serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--naranja-oscuro);
+  line-height: 1;
+}
+
+/* =============================================
+   BÚSQUEDA
+   ============================================= */
+.search-wrap {
+  position: relative;
+}
+
+.search-wrap i {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: var(--texto-terciario);
+  pointer-events: none;
+}
+
+.search-wrap input {
+  width: 100%;
+  font-size: 12px;
+  padding: 10px 12px 10px 34px;
+  border-radius: 12px;
+  border: none;
+  background: var(--beige);
+  color: var(--texto-principal);
+  outline: none;
+  font-family: 'Inter', sans-serif;
+}
+
+.search-wrap input::placeholder { color: var(--texto-muted); }
+.search-wrap input:focus { box-shadow: 0 0 0 2px var(--naranja-claro); }
+
+/* =============================================
+   TABLA
+   ============================================= */
+.table-panel {
+  background: var(--beige);
+  border: 2.5px solid var(--negro);
+  border-radius: var(--radio);
+  overflow: hidden;
+  position: relative;
+}
+
+.table-scroll {
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: 400px;
+}
+
+.table-scroll::-webkit-scrollbar { width: 3px; height: 3px; }
+.table-scroll::-webkit-scrollbar-track { background: var(--beige-borde); }
+.table-scroll::-webkit-scrollbar-thumb { background: var(--naranja); border-radius: 2px; }
+
+table { border-collapse: collapse; width: 100%; }
+thead { position: sticky; top: 0; z-index: 10; }
+
+thead th {
+  background: var(--negro);
+  color: var(--beige);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 10px 8px;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+}
+
+thead th:hover { background: #2a2a2a; }
+thead th.active-filter { color: var(--naranja-claro); }
+
+tbody tr {
+  border-bottom: 0.5px solid var(--beige-borde);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+tbody tr:hover { background: var(--beige-osc); }
+
+tbody tr.selected { background: var(--negro); }
+tbody tr.selected td { color: var(--beige) !important; }
+tbody tr.selected td.name { color: var(--naranja-claro) !important; }
+tbody tr.selected td.final { color: var(--naranja-claro) !important; }
+
+td {
+  font-size: 11px;
+  color: var(--texto-secundario);
+  padding: 8px 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+td.rank {
+  color: var(--texto-muted);
+  text-align: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 12px;
+}
+
+td.name { color: var(--negro); font-weight: 500; max-width: 130px; }
+td.num { text-align: center; }
+
+td.final {
+  font-weight: 700;
+  color: var(--naranja-oscuro);
+  text-align: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 13px;
+}
+
+.mini-bar { height: 2px; background: var(--beige-borde); border-radius: 1px; margin-top: 3px; }
+.mini-fill { height: 2px; background: var(--naranja); border-radius: 1px; opacity: 0.7; }
+.no-results {
+  padding: 2rem;
+  text-align: center;
+  font-size: 12px;
+  color: var(--texto-terciario);
+  font-style: italic;
+  font-family: 'Playfair Display', serif;
+}
+
+/* =============================================
+   DROPDOWN FILTRO (tipo Excel)
+   ============================================= */
+.filter-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 190px;
+  background: var(--negro);
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 8px;
+  z-index: 200;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  display: none;
+}
+
+.filter-dropdown.open { display: block; }
+
+.dd-search {
+  width: 100%;
+  font-size: 10px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 0.5px solid #333;
+  background: #111;
+  color: #ccc;
+  outline: none;
+  margin-bottom: 6px;
+  font-family: 'Inter', sans-serif;
+}
+
+.dd-search::placeholder { color: #555; }
+.dd-search:focus { border-color: var(--naranja); }
+
+.dd-actions { display: flex; gap: 8px; margin-bottom: 6px; }
+.dd-action { font-size: 9px; color: #888; cursor: pointer; text-decoration: underline; }
+.dd-action:hover { color: var(--naranja-claro); }
+
+.dd-list { max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.dd-list::-webkit-scrollbar { width: 3px; }
+.dd-list::-webkit-scrollbar-thumb { background: var(--naranja); border-radius: 2px; }
+
+.dd-item { display: flex; align-items: center; gap: 6px; padding: 4px 5px; border-radius: 5px; cursor: pointer; }
+.dd-item:hover { background: #2a2a2a; }
+.dd-item input[type=checkbox] { accent-color: var(--naranja); cursor: pointer; width: 12px; height: 12px; flex-shrink: 0; }
+.dd-item label { font-size: 10px; color: #ccc; cursor: pointer; white-space: nowrap; }
+
+.dd-apply {
+  width: 100%;
+  margin-top: 8px;
+  background: var(--naranja);
+  color: white;
+  border: none;
+  padding: 6px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+.dd-apply:hover { background: var(--naranja-oscuro); }
+
+/* =============================================
+   SCROLLBAR GLOBAL
+   ============================================= */
+.custom-scroll::-webkit-scrollbar { width: 3px; }
+.custom-scroll::-webkit-scrollbar-track { background: var(--beige-borde); border-radius: 2px; }
+.custom-scroll::-webkit-scrollbar-thumb { background: var(--naranja); border-radius: 2px; }
+
+/* =============================================
+   BOTONES
+   ============================================= */
+.btn-dark {
+  background: var(--negro);
+  color: var(--beige);
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-dark:hover { background: #2a2a2a; }
+.btn-dark:disabled { opacity: 0.3; cursor: default; }
+
+.btn-outline {
+  background: transparent;
+  color: var(--texto-terciario);
+  border: 1.5px solid var(--beige-borde);
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-outline:hover { border-color: var(--texto-terciario); color: var(--texto-secundario); }
+
+</style>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <style>
+    .th-inner { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+    .th-label { display: flex; flex-direction: column; align-items: flex-start; }
+    .th-arrow { font-size: 10px; opacity: 0.4; flex-shrink: 0; }
+    thead th.active-filter .th-arrow { opacity: 1; color: var(--naranja-claro); }
+    .selected-detail {
+      background: var(--beige);
+      border: 2.5px solid var(--naranja);
+      border-radius: var(--radio);
+      padding: 14px;
+      display: none;
+      align-items: center;
+      gap: 16px;
+    }
+    .selected-detail.show { display: flex; }
+    .detail-cover { width: 56px; height: 56px; background: var(--negro); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; }
+    .detail-cover img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
+    .detail-cover i { font-size: 22px; color: #3a3a3a; }
+    .detail-info { flex: 1; }
+    .detail-name { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 700; color: var(--negro); }
+    .detail-artist { font-size: 9px; color: var(--texto-terciario); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; }
+    .detail-scores { display: flex; gap: 12px; flex-wrap: wrap; }
+    .detail-score { display: flex; flex-direction: column; align-items: center; }
+    .detail-score-val { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 700; color: var(--naranja-oscuro); line-height: 1; }
+    .detail-score-lbl { font-size: 7px; color: var(--texto-terciario); letter-spacing: 1px; text-transform: uppercase; }
+    .detail-final { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 700; color: var(--naranja-oscuro); display: flex; flex-direction: column; align-items: center; flex-shrink: 0; line-height: 1; }
+    .detail-final span { font-size: 7px; font-family: 'Inter', sans-serif; color: var(--texto-terciario); letter-spacing: 1.5px; text-transform: uppercase; font-weight: 400; margin-top: 2px; }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <nav class="nav">
+    <span class="nav-brand">🎵 Vinilo Stream</span>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link">Reseña</a>
+      <a href="historial.html" class="nav-link active">Historial</a>
+      <a href="cita.html" class="nav-link">Cita a ciegas</a>
+    </div>
+  </nav>
+
+  <div style="display:flex;align-items:center;justify-content:space-between;">
+    <span style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:#F2EDE4;">Historial de discos</span>
+    <span style="font-size:10px;color:#F2EDE4;opacity:0.7" id="count"></span>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat"><div class="stat-label">Discos reseñados</div><div class="stat-val" id="s-total">—</div></div>
+    <div class="stat"><div class="stat-label">Promedio general</div><div class="stat-val" id="s-avg">—</div></div>
+    <div class="stat"><div class="stat-label">Mejor puntuación</div><div class="stat-val" id="s-best">—</div></div>
+    <div class="stat"><div class="stat-label">Géneros distintos</div><div class="stat-val" id="s-genres">—</div></div>
+  </div>
+
+  <div class="search-wrap">
+    <i class="ti ti-search" aria-hidden="true"></i>
+    <input id="f-search" placeholder="Buscar álbum o artista..." oninput="render()">
+  </div>
+
+  <div class="selected-detail" id="sel-detail">
+    <div class="detail-cover"><i class="ti ti-vinyl" aria-hidden="true"></i></div>
+    <div class="detail-info">
+      <div class="detail-name" id="d-name"></div>
+      <div class="detail-artist" id="d-artist"></div>
+      <div class="detail-scores">
+        <div class="detail-score"><div class="detail-score-val" id="d-c"></div><div class="detail-score-lbl">Canciones</div></div>
+        <div class="detail-score"><div class="detail-score-val" id="d-k"></div><div class="detail-score-lbl">Concepto</div></div>
+        <div class="detail-score"><div class="detail-score-val" id="d-v"></div><div class="detail-score-lbl">Visual</div></div>
+        <div class="detail-score"><div class="detail-score-val" id="d-a"></div><div class="detail-score-lbl">Adicionales</div></div>
+      </div>
+    </div>
+    <div class="detail-final"><span id="d-final-val"></span><span>Punt. Final</span></div>
+    <button class="btn-dark" onclick="goToP1()">↗ Ver en Reseña</button>
+  </div>
+
+  <div class="table-panel" id="table-panel">
+    <div class="table-scroll">
+      <table>
+        <thead><tr id="hr"></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div class="no-results" id="no-results" style="display:none">No hay discos que coincidan con los filtros.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// =============================================
+// DATOS DEL PROYECTO — editá desde Google Sheets
+// Este archivo se reemplaza automáticamente con
+// los datos reales de tu Google Sheets
+// =============================================
+
+const DISCOS = [
+  {
+    id: 1, ep: 1,
+    name: "Revolver", artist: "The Beatles",
+    country: "Reino Unido", year: 1966,
+    genre: "Rock psicodélico", subgenre: "Psicodélico",
+    tracks: 14, duration: 35,
+    c: 9.0, k: 8.5, v: 8.0, a: 7.5,
+    citaCiegas: false, vibes: [],
+    songs: ["Taxman","Eleanor Rigby","I'm Only Sleeping","Love You To","Here, There and Everywhere","Yellow Submarine","She Said She Said","Good Day Sunshine","And Your Bird Can Sing","For No One","Doctor Robert","I Want to Tell You","Got to Get You into My Life","Tomorrow Never Knows"],
+    songScores: [9.5,10,8,7,9,6.5,8.5,7.5,7.8,8.8,7.2,8.2,8.7,10]
+  },
+  {
+    id: 2, ep: 2,
+    name: "Kind of Blue", artist: "Miles Davis",
+    country: "Estados Unidos", year: 1959,
+    genre: "Jazz modal", subgenre: "Modal Jazz",
+    tracks: 5, duration: 45,
+    c: 8.0, k: 9.0, v: 7.5, a: 8.0,
+    citaCiegas: true, vibes: ["melancólico","nocturno","intimista","contemplativo"],
+    songs: ["So What","Freddie Freeloader","Blue in Green","All Blues","Flamenco Sketches"],
+    songScores: [9.5,8.5,9,8.5,9]
+  },
+  {
+    id: 3, ep: 3,
+    name: "Rumours", artist: "Fleetwood Mac",
+    country: "Reino Unido", year: 1977,
+    genre: "Soft Rock", subgenre: "Soft Rock",
+    tracks: 11, duration: 40,
+    c: 8.5, k: 7.5, v: 8.5, a: 6.0,
+    citaCiegas: false, vibes: [],
+    songs: ["Second Hand News","Dreams","Never Going Back","The Chain","You Make Loving Fun","I Don't Want to Know","Oh Daddy","Gold Dust Woman","Go Your Own Way","Songbird","The Chain (Reprise)"],
+    songScores: [8,9.5,7.5,9,8,7.5,7,8.5,9,8.5,7]
+  },
+  {
+    id: 4, ep: 4,
+    name: "Innervisions", artist: "Stevie Wonder",
+    country: "Estados Unidos", year: 1973,
+    genre: "Funk Soul", subgenre: "Funk Soul",
+    tracks: 9, duration: 44,
+    c: 9.0, k: 8.0, v: 7.0, a: 9.0,
+    citaCiegas: true, vibes: ["psicodélico","funk","introspectivo","colorido"],
+    songs: ["Too High","Visions","Living for the City","Golden Lady","Higher Ground","Jesus Children of America","All in Love is Fair","Don't You Worry 'Bout a Thing","He's Misstra Know-It-All"],
+    songScores: [8,8.5,10,8.5,9.5,7.5,8,8.5,8]
+  },
+  {
+    id: 5, ep: 5,
+    name: "Blue", artist: "Joni Mitchell",
+    country: "Canadá", year: 1971,
+    genre: "Folk Rock", subgenre: "Folk Rock",
+    tracks: 10, duration: 36,
+    c: 8.0, k: 9.0, v: 6.5, a: 7.0,
+    citaCiegas: false, vibes: [],
+    songs: ["All I Want","My Old Man","Little Green","Carey","Blue","California","This Flight Tonight","River","A Case of You","The Last Time I Saw Richard"],
+    songScores: [8.5,8,8,8.5,9,9,7.5,9.5,10,8]
+  },
+  {
+    id: 6, ep: 6,
+    name: "Thriller", artist: "Michael Jackson",
+    country: "Estados Unidos", year: 1982,
+    genre: "Pop / R&B", subgenre: "Pop / R&B",
+    tracks: 9, duration: 42,
+    c: 8.5, k: 7.0, v: 9.0, a: 8.0,
+    citaCiegas: false, vibes: [],
+    songs: ["Wanna Be Startin' Somethin'","Baby Be Mine","The Girl Is Mine","Thriller","Beat It","Billie Jean","Human Nature","P.Y.T.","The Lady in My Life"],
+    songScores: [9,7.5,7,10,9.5,10,8,8,7.5]
+  },
+  {
+    id: 7, ep: 7,
+    name: "What's Going On", artist: "Marvin Gaye",
+    country: "Estados Unidos", year: 1971,
+    genre: "Soul / Funk", subgenre: "Soul / Funk",
+    tracks: 9, duration: 35,
+    c: 9.5, k: 9.5, v: 7.0, a: 8.0,
+    citaCiegas: true, vibes: ["espiritual","cálido","político","envolvente"],
+    songs: ["What's Going On","What's Happening Brother","Flyin' High","Save the Children","God Is Love","Mercy Mercy Me","Right On","Wholy Holy","Inner City Blues"],
+    songScores: [10,8.5,8.5,9,8.5,9.5,8,8.5,9.5]
+  },
+  {
+    id: 8, ep: 8,
+    name: "Graceland", artist: "Paul Simon",
+    country: "Estados Unidos", year: 1986,
+    genre: "World Music", subgenre: "World Music",
+    tracks: 11, duration: 42,
+    c: 7.5, k: 8.0, v: 6.5, a: 6.0,
+    citaCiegas: false, vibes: [],
+    songs: ["The Boy in the Bubble","Graceland","I Know What I Know","Gumboots","Diamonds on the Soles","You Can Call Me Al","Under African Skies","Homeless","Crazy Love Vol. II","That Was Your Mother","All Around the World"],
+    songScores: [8.5,9,7.5,7,8,9.5,8,8.5,7.5,7,8]
+  },
+  {
+    id: 9, ep: 9,
+    name: "Exodus", artist: "Bob Marley",
+    country: "Jamaica", year: 1977,
+    genre: "Roots Reggae", subgenre: "Roots Reggae",
+    tracks: 10, duration: 37,
+    c: 8.0, k: 8.5, v: 8.0, a: 7.5,
+    citaCiegas: false, vibes: [],
+    songs: ["Natural Mystic","So Much Things to Say","Guiltiness","The Heathen","Exodus","Jamming","Waiting in Vain","Turn Your Lights Down Low","Three Little Birds","One Love"],
+    songScores: [8.5,8,8,8,9.5,9,9,8.5,8.5,9]
+  },
+  {
+    id: 10, ep: 10,
+    name: "Off the Wall", artist: "Michael Jackson",
+    country: "Estados Unidos", year: 1979,
+    genre: "Disco Funk", subgenre: "Disco Funk",
+    tracks: 10, duration: 41,
+    c: 8.0, k: 7.5, v: 7.5, a: 7.0,
+    citaCiegas: true, vibes: ["bailable","festivo","elegante","groovy"],
+    songs: ["Don't Stop 'Til You Get Enough","Rock With You","Workin' Day and Night","Get on the Floor","Off the Wall","Girlfriend","She's Out of My Life","I Can't Help It","It's the Falling in Love","Burn This Disco Out"],
+    songScores: [9.5,9.5,8,8,8.5,7,8.5,7.5,7,7.5]
+  },
+];
+
+// Calcular puntuación final automáticamente
+DISCOS.forEach(d => {
+  d.score = parseFloat((d.c * 0.4 + d.k * 0.25 + d.v * 0.25 + d.a * 0.1).toFixed(2));
+});
+
+// Estado global compartido entre páginas
+const APP = {
+  selectedDisco: null,
+  setSelected(disco) {
+    this.selectedDisco = disco;
+    localStorage.setItem('selectedDisco', disco ? disco.id : null);
+  },
+  getSelected() {
+    const id = localStorage.getItem('selectedDisco');
+    return id ? DISCOS.find(d => d.id === parseInt(id)) || DISCOS[0] : DISCOS[0];
+  }
+};
+
+</script>
+<script>
+const COLS = [
+  {key:'rank', label:'#', noFilter:true, width:'28px'},
+  {key:'name', label:'Álbum', noFilter:true, width:'130px'},
+  {key:'artist', label:'Artista', noFilter:true, width:'115px'},
+  {key:'country', label:'País', width:'90px'},
+  {key:'year', label:'Año', width:'50px'},
+  {key:'genre', label:'Género', width:'100px'},
+  {key:'subgenre', label:'Subgénero', width:'105px'},
+  {key:'tracks', label:'Tracks', width:'52px'},
+  {key:'duration', label:'Dur. min', width:'55px'},
+  {key:'c', label:'Canciones\n(40%)', width:'72px'},
+  {key:'k', label:'Concepto\n(25%)', width:'72px'},
+  {key:'v', label:'Visual\n(25%)', width:'62px'},
+  {key:'a', label:'Adicionales\n(10%)', width:'75px'},
+  {key:'score', label:'Punt. Final', width:'75px'},
+  {key:'ep', label:'Ep.', width:'40px'},
+];
+
+let sortCol='score', sortDir=-1, selected=null;
+let activeFilters={};
+let openDD=null;
+
+function getUniqueVals(key) {
+  return [...new Set(DISCOS.map(d=>String(d[key])))].sort((a,b)=>isNaN(a)?a.localeCompare(b):Number(a)-Number(b));
+}
+
+function buildHeaders() {
+  const tr = document.getElementById('hr');
+  tr.innerHTML = '';
+  COLS.forEach(col => {
+    const th = document.createElement('th');
+    th.style.minWidth = col.width||'60px';
+    th.style.position = 'relative';
+    const hasFilter = !col.noFilter;
+    const isActive = activeFilters[col.key] && activeFilters[col.key].size < getUniqueVals(col.key).length;
+    if(isActive) th.classList.add('active-filter');
+
+    const labelLines = col.label.split('\n');
+    const inner = document.createElement('div');
+    inner.className = 'th-inner';
+    const lbl = document.createElement('div');
+    lbl.className = 'th-label';
+    labelLines.forEach((l,i) => {
+      const s = document.createElement('span');
+      s.textContent = l;
+      if(i>0) s.style.cssText='font-size:8px;opacity:0.6;font-weight:400;';
+      lbl.appendChild(s);
+    });
+    inner.appendChild(lbl);
+    const arr = document.createElement('i');
+    arr.className = hasFilter ? 'ti ti-chevron-down th-arrow' : 'ti ti-selector th-arrow';
+    if(!hasFilter) arr.style.opacity='0.3';
+    inner.appendChild(arr);
+    th.appendChild(inner);
+
+    if(hasFilter) {
+      const dd = document.createElement('div');
+      dd.className = 'filter-dropdown';
+      dd.id = 'dd-'+col.key;
+
+      const srch = document.createElement('input');
+      srch.className = 'dd-search';
+      srch.placeholder = 'Buscar...';
+      srch.oninput = () => renderDDList(col.key, srch.value);
+      srch.onclick = e => e.stopPropagation();
+      dd.appendChild(srch);
+
+      const actions = document.createElement('div');
+      actions.className = 'dd-actions';
+      const selAll = document.createElement('span');
+      selAll.className = 'dd-action';
+      selAll.textContent = 'Seleccionar todo';
+      selAll.onclick = e => { e.stopPropagation(); selectAllDD(col.key); };
+      const clrAll = document.createElement('span');
+      clrAll.className = 'dd-action';
+      clrAll.textContent = 'Limpiar';
+      clrAll.onclick = e => { e.stopPropagation(); clearDD(col.key); };
+      actions.appendChild(selAll);
+      actions.appendChild(clrAll);
+      dd.appendChild(actions);
+
+      const list = document.createElement('div');
+      list.className = 'dd-list';
+      list.id = 'ddlist-'+col.key;
+      dd.appendChild(list);
+
+      const apply = document.createElement('button');
+      apply.className = 'dd-apply';
+      apply.textContent = 'Aplicar';
+      apply.onclick = e => { e.stopPropagation(); closeDropdown(); render(); };
+      dd.appendChild(apply);
+      th.appendChild(dd);
+
+      th.onclick = e => {
+        e.stopPropagation();
+        if(openDD === col.key) { closeDropdown(); return; }
+        closeDropdown();
+        openDD = col.key;
+        dd.classList.add('open');
+        srch.value = '';
+        renderDDList(col.key, '');
+      };
+    } else {
+      th.onclick = () => sortBy(col.key);
+    }
+    tr.appendChild(th);
+  });
+}
+
+function renderDDList(key, search) {
+  const list = document.getElementById('ddlist-'+key);
+  if(!list) return;
+  const vals = getUniqueVals(key).filter(v=>v.toLowerCase().includes(search.toLowerCase()));
+  const sel = activeFilters[key] || new Set(getUniqueVals(key));
+  list.innerHTML = vals.map(v=>`
+    <div class="dd-item" onclick="event.stopPropagation();toggleVal('${key}','${v.replace(/'/g,"\\'")}')">
+      <input type="checkbox" ${sel.has(v)?'checked':''} onclick="event.stopPropagation();toggleVal('${key}','${v.replace(/'/g,"\\'")}')">
+      <label onclick="event.stopPropagation()">${v}</label>
+    </div>`).join('');
+}
+
+function toggleVal(key, val) {
+  if(!activeFilters[key]) activeFilters[key] = new Set(getUniqueVals(key));
+  if(activeFilters[key].has(val)) activeFilters[key].delete(val);
+  else activeFilters[key].add(val);
+  renderDDList(key, document.querySelector('#dd-'+key+' .dd-search')?.value||'');
+}
+
+function selectAllDD(key) { activeFilters[key]=new Set(getUniqueVals(key)); renderDDList(key,''); }
+function clearDD(key) { activeFilters[key]=new Set(); renderDDList(key,''); }
+function closeDropdown() {
+  if(openDD) { document.getElementById('dd-'+openDD)?.classList.remove('open'); openDD=null; }
+}
+document.addEventListener('click', ()=>closeDropdown());
+
+function sortBy(col) {
+  if(sortCol===col) sortDir*=-1;
+  else { sortCol=col; sortDir=['name','artist','country','genre','subgenre'].includes(col)?1:-1; }
+  render();
+}
+
+function getFiltered() {
+  const q = document.getElementById('f-search').value.toLowerCase();
+  return DISCOS.filter(d => {
+    if(q && !d.name.toLowerCase().includes(q) && !d.artist.toLowerCase().includes(q)) return false;
+    for(const [key,sel] of Object.entries(activeFilters)) {
+      if(sel.size>0 && sel.size<getUniqueVals(key).length && !sel.has(String(d[key]))) return false;
+    }
+    return true;
+  }).sort((a,b) => {
+    const va=a[sortCol], vb=b[sortCol];
+    if(typeof va==='string') return va.localeCompare(vb)*sortDir;
+    return (va-vb)*sortDir;
+  });
+}
+
+function selectDisco(d) {
+  selected = d;
+  APP.setSelected(d);
+  document.getElementById('d-name').textContent = d.name;
+  document.getElementById('d-artist').textContent = d.artist;
+  document.getElementById('d-c').textContent = d.c.toFixed(1);
+  document.getElementById('d-k').textContent = d.k.toFixed(1);
+  document.getElementById('d-v').textContent = d.v.toFixed(1);
+  document.getElementById('d-a').textContent = d.a.toFixed(1);
+  document.getElementById('d-final-val').textContent = d.score.toFixed(2);
+  document.getElementById('sel-detail').classList.add('show');
+  document.querySelectorAll('tbody tr').forEach(r=>r.classList.toggle('selected', r.dataset.id===String(d.id)));
+}
+
+function goToP1() { window.location.href='index.html'; }
+
+function render() {
+  buildHeaders();
+  const filtered = getFiltered();
+  const tbody = document.getElementById('tbody');
+  const noRes = document.getElementById('no-results');
+  document.getElementById('count').textContent = filtered.length+' disco'+(filtered.length!==1?'s':'');
+  if(!filtered.length){tbody.innerHTML='';noRes.style.display='block';updateStats([]);return;}
+  noRes.style.display='none';
+  tbody.innerHTML = filtered.map((d,i)=>`
+    <tr data-id="${d.id}" class="${selected&&selected.id===d.id?'selected':''}" onclick="selectDisco(DISCOS.find(x=>x.id===${d.id}))">
+      <td class="rank">${i+1}</td>
+      <td class="name" title="${d.name}">${d.name}</td>
+      <td>${d.artist}</td>
+      <td>${d.country}</td>
+      <td class="num">${d.year}</td>
+      <td>${d.genre}</td>
+      <td>${d.subgenre}</td>
+      <td class="num">${d.tracks}</td>
+      <td class="num">${d.duration}</td>
+      <td class="num">${d.c.toFixed(1)}</td>
+      <td class="num">${d.k.toFixed(1)}</td>
+      <td class="num">${d.v.toFixed(1)}</td>
+      <td class="num">${d.a.toFixed(1)}</td>
+      <td class="final">${d.score.toFixed(2)}<div class="mini-bar"><div class="mini-fill" style="width:${Math.round(d.score*10)}%"></div></div></td>
+      <td class="num" style="color:var(--texto-terciario)">#${d.ep}</td>
+    </tr>`).join('');
+  updateStats(filtered);
+}
+
+function updateStats(data) {
+  document.getElementById('s-total').textContent = data.length||'—';
+  if(!data.length){['s-avg','s-best','s-genres'].forEach(id=>document.getElementById(id).textContent='—');return;}
+  document.getElementById('s-avg').textContent = (data.reduce((s,d)=>s+d.score,0)/data.length).toFixed(1);
+  document.getElementById('s-best').textContent = Math.max(...data.map(d=>d.score)).toFixed(1);
+  document.getElementById('s-genres').textContent = new Set(data.map(d=>d.genre)).size;
+}
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cita a ciegas con un disco</title>
+  <style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
+
+/* =============================================
+   VARIABLES GLOBALES
+   ============================================= */
+:root {
+  --naranja: #D45E2A;
+  --naranja-claro: #E8896A;
+  --naranja-oscuro: #B84D1F;
+  --beige: #F2EDE4;
+  --beige-osc: #E8E0D4;
+  --beige-borde: #DDD8CE;
+  --negro: #1A1A1A;
+  --texto-principal: #1A1A1A;
+  --texto-secundario: #6A6460;
+  --texto-terciario: #A09890;
+  --texto-muted: #C4BDB5;
+  --radio: 20px;
+  --radio-lg: 28px;
+}
+
+/* =============================================
+   RESET & BASE
+   ============================================= */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: 'Inter', sans-serif;
+  background: var(--naranja);
+  color: var(--texto-principal);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* =============================================
+   LAYOUT PRINCIPAL
+   ============================================= */
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--naranja);
+  padding: 12px;
+  gap: 10px;
+}
+
+/* =============================================
+   NAVEGACIÓN
+   ============================================= */
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--negro);
+  border-radius: var(--radio);
+}
+
+.nav-brand {
+  font-family: 'Playfair Display', serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--beige);
+  letter-spacing: 0.5px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 4px;
+}
+
+.nav-link {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--texto-terciario);
+  text-decoration: none;
+  padding: 6px 14px;
+  border-radius: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: all 0.2s;
+}
+
+.nav-link:hover { color: var(--beige); background: rgba(255,255,255,0.06); }
+.nav-link.active { background: var(--naranja); color: white; }
+
+/* =============================================
+   PANELS / CARDS
+   ============================================= */
+.panel {
+  background: var(--beige);
+  border-radius: var(--radio);
+  padding: 14px;
+}
+
+.panel-dark {
+  background: var(--beige);
+  border: 2.5px solid var(--negro);
+  border-radius: var(--radio);
+  padding: 14px;
+}
+
+.panel-warm {
+  background: var(--beige);
+  border: 2.5px solid var(--naranja);
+  border-radius: var(--radio);
+  padding: 14px;
+}
+
+.panel-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--negro);
+  margin-bottom: 10px;
+}
+
+/* =============================================
+   STATS ROW
+   ============================================= */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.stat {
+  background: var(--beige);
+  border-radius: 14px;
+  padding: 10px 14px;
+}
+
+.stat-label {
+  font-size: 8px;
+  font-weight: 500;
+  color: var(--texto-terciario);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.stat-val {
+  font-family: 'Playfair Display', serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--naranja-oscuro);
+  line-height: 1;
+}
+
+/* =============================================
+   BÚSQUEDA
+   ============================================= */
+.search-wrap {
+  position: relative;
+}
+
+.search-wrap i {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: var(--texto-terciario);
+  pointer-events: none;
+}
+
+.search-wrap input {
+  width: 100%;
+  font-size: 12px;
+  padding: 10px 12px 10px 34px;
+  border-radius: 12px;
+  border: none;
+  background: var(--beige);
+  color: var(--texto-principal);
+  outline: none;
+  font-family: 'Inter', sans-serif;
+}
+
+.search-wrap input::placeholder { color: var(--texto-muted); }
+.search-wrap input:focus { box-shadow: 0 0 0 2px var(--naranja-claro); }
+
+/* =============================================
+   TABLA
+   ============================================= */
+.table-panel {
+  background: var(--beige);
+  border: 2.5px solid var(--negro);
+  border-radius: var(--radio);
+  overflow: hidden;
+  position: relative;
+}
+
+.table-scroll {
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: 400px;
+}
+
+.table-scroll::-webkit-scrollbar { width: 3px; height: 3px; }
+.table-scroll::-webkit-scrollbar-track { background: var(--beige-borde); }
+.table-scroll::-webkit-scrollbar-thumb { background: var(--naranja); border-radius: 2px; }
+
+table { border-collapse: collapse; width: 100%; }
+thead { position: sticky; top: 0; z-index: 10; }
+
+thead th {
+  background: var(--negro);
+  color: var(--beige);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 10px 8px;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+}
+
+thead th:hover { background: #2a2a2a; }
+thead th.active-filter { color: var(--naranja-claro); }
+
+tbody tr {
+  border-bottom: 0.5px solid var(--beige-borde);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+tbody tr:hover { background: var(--beige-osc); }
+
+tbody tr.selected { background: var(--negro); }
+tbody tr.selected td { color: var(--beige) !important; }
+tbody tr.selected td.name { color: var(--naranja-claro) !important; }
+tbody tr.selected td.final { color: var(--naranja-claro) !important; }
+
+td {
+  font-size: 11px;
+  color: var(--texto-secundario);
+  padding: 8px 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+td.rank {
+  color: var(--texto-muted);
+  text-align: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 12px;
+}
+
+td.name { color: var(--negro); font-weight: 500; max-width: 130px; }
+td.num { text-align: center; }
+
+td.final {
+  font-weight: 700;
+  color: var(--naranja-oscuro);
+  text-align: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 13px;
+}
+
+.mini-bar { height: 2px; background: var(--beige-borde); border-radius: 1px; margin-top: 3px; }
+.mini-fill { height: 2px; background: var(--naranja); border-radius: 1px; opacity: 0.7; }
+.no-results {
+  padding: 2rem;
+  text-align: center;
+  font-size: 12px;
+  color: var(--texto-terciario);
+  font-style: italic;
+  font-family: 'Playfair Display', serif;
+}
+
+/* =============================================
+   DROPDOWN FILTRO (tipo Excel)
+   ============================================= */
+.filter-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 190px;
+  background: var(--negro);
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 8px;
+  z-index: 200;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  display: none;
+}
+
+.filter-dropdown.open { display: block; }
+
+.dd-search {
+  width: 100%;
+  font-size: 10px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 0.5px solid #333;
+  background: #111;
+  color: #ccc;
+  outline: none;
+  margin-bottom: 6px;
+  font-family: 'Inter', sans-serif;
+}
+
+.dd-search::placeholder { color: #555; }
+.dd-search:focus { border-color: var(--naranja); }
+
+.dd-actions { display: flex; gap: 8px; margin-bottom: 6px; }
+.dd-action { font-size: 9px; color: #888; cursor: pointer; text-decoration: underline; }
+.dd-action:hover { color: var(--naranja-claro); }
+
+.dd-list { max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.dd-list::-webkit-scrollbar { width: 3px; }
+.dd-list::-webkit-scrollbar-thumb { background: var(--naranja); border-radius: 2px; }
+
+.dd-item { display: flex; align-items: center; gap: 6px; padding: 4px 5px; border-radius: 5px; cursor: pointer; }
+.dd-item:hover { background: #2a2a2a; }
+.dd-item input[type=checkbox] { accent-color: var(--naranja); cursor: pointer; width: 12px; height: 12px; flex-shrink: 0; }
+.dd-item label { font-size: 10px; color: #ccc; cursor: pointer; white-space: nowrap; }
+
+.dd-apply {
+  width: 100%;
+  margin-top: 8px;
+  background: var(--naranja);
+  color: white;
+  border: none;
+  padding: 6px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+.dd-apply:hover { background: var(--naranja-oscuro); }
+
+/* =============================================
+   SCROLLBAR GLOBAL
+   ============================================= */
+.custom-scroll::-webkit-scrollbar { width: 3px; }
+.custom-scroll::-webkit-scrollbar-track { background: var(--beige-borde); border-radius: 2px; }
+.custom-scroll::-webkit-scrollbar-thumb { background: var(--naranja); border-radius: 2px; }
+
+/* =============================================
+   BOTONES
+   ============================================= */
+.btn-dark {
+  background: var(--negro);
+  color: var(--beige);
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-dark:hover { background: #2a2a2a; }
+.btn-dark:disabled { opacity: 0.3; cursor: default; }
+
+.btn-outline {
+  background: transparent;
+  color: var(--texto-terciario);
+  border: 1.5px solid var(--beige-borde);
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-outline:hover { border-color: var(--texto-terciario); color: var(--texto-secundario); }
+
+</style>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <style>
+    .cita-wrap { display: flex; flex-direction: column; align-items: center; gap: 1.25rem; }
+    .main-panel { background: var(--beige); border: 2.5px solid var(--negro); border-radius: var(--radio); padding: 20px; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 1.25rem; }
+    .vibes-row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 320px; min-height: 22px; }
+    .vibe { font-size: 11px; color: var(--texto-terciario); letter-spacing: 0.5px; }
+    .vibe::before { content: "+ "; color: var(--texto-muted); }
+    .tagline { font-size: 12px; color: var(--texto-terciario); font-style: italic; font-family: 'Playfair Display', serif; text-align: center; }
+    .stage { position: relative; width: 240px; height: 240px; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.25); flex-shrink: 0; }
+    .album-back { position: absolute; inset: 0; background: var(--negro); display: flex; align-items: center; justify-content: center; }
+    .album-meta { text-align: center; display: flex; flex-direction: column; gap: 6px; opacity: 0; transition: opacity 1s ease 0.2s; padding: 20px; }
+    .album-meta.show { opacity: 1; }
+    .album-title { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--beige); }
+    .album-artist { font-size: 11px; color: #8A847C; letter-spacing: 2px; text-transform: uppercase; }
+    .album-year { font-size: 10px; color: #5a4a3a; letter-spacing: 3px; }
+    .divider-line { width: 24px; height: 0.5px; background: #3a3030; margin: 0 auto; }
+    canvas { position: absolute; inset: 0; pointer-events: none; }
+    .btn-row { display: flex; gap: 10px; }
+    .info-panel {
+      background: var(--beige);
+      border: 2.5px solid var(--naranja);
+      border-radius: var(--radio);
+      padding: 16px;
+      width: 100%;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.8s ease 0.4s, transform 0.8s ease 0.4s;
+      display: none;
+    }
+    .info-panel.show { opacity: 1; transform: translateY(0); display: block; }
+    .info-album { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--negro); }
+    .info-artist-lbl { font-size: 10px; color: var(--texto-terciario); letter-spacing: 2.5px; text-transform: uppercase; margin-top: 2px; }
+    .info-sep { height: 0.5px; background: var(--beige-borde); margin: 10px 0; }
+    .info-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+    .info-item { display: flex; flex-direction: column; gap: 1px; }
+    .info-label { font-size: 8px; color: var(--texto-terciario); letter-spacing: 1.5px; text-transform: uppercase; }
+    .info-val { font-size: 12px; color: var(--texto-secundario); }
+    .score-row { display: flex; align-items: baseline; gap: 8px; margin-top: 8px; }
+    .score-big { font-family: 'Playfair Display', serif; font-size: 32px; color: var(--naranja-oscuro); line-height: 1; }
+    .score-lbl { font-size: 9px; color: var(--texto-terciario); letter-spacing: 2px; text-transform: uppercase; }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <nav class="nav">
+    <span class="nav-brand">🎵 Vinilo Stream</span>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link">Reseña</a>
+      <a href="historial.html" class="nav-link">Historial</a>
+      <a href="cita.html" class="nav-link active">Cita a ciegas</a>
+    </div>
+  </nav>
+
+  <div class="cita-wrap">
+    <div class="main-panel">
+      <div class="vibes-row" id="vibes-row">
+        <span class="tagline">Presioná para recibir un disco al azar</span>
+      </div>
+
+      <div class="stage">
+        <div class="album-back">
+          <div class="album-meta" id="meta">
+            <div class="album-title" id="m-title"></div>
+            <div class="divider-line"></div>
+            <div class="album-artist" id="m-artist"></div>
+            <div class="album-year" id="m-year"></div>
+          </div>
+        </div>
+        <canvas id="cv" width="240" height="240"></canvas>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-dark" id="mainBtn" onclick="handleMain()">Quiero un disco</button>
+        <button class="btn-outline" id="rstBtn" onclick="resetAll()" style="display:none">↺ Otro disco</button>
+      </div>
+    </div>
+
+    <div class="info-panel" id="infoPanel">
+      <div class="info-album" id="i-album"></div>
+      <div class="info-artist-lbl" id="i-artist"></div>
+      <div class="info-sep"></div>
+      <div class="info-grid">
+        <div class="info-item"><span class="info-label">Año</span><span class="info-val" id="i-year"></span></div>
+        <div class="info-item"><span class="info-label">País</span><span class="info-val" id="i-country"></span></div>
+        <div class="info-item"><span class="info-label">Género</span><span class="info-val" id="i-genre"></span></div>
+        <div class="info-item"><span class="info-label">Tracks</span><span class="info-val" id="i-tracks"></span></div>
+      </div>
+      <div class="score-row">
+        <span class="score-big" id="i-score"></span>
+        <span class="score-lbl">Puntuación final</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// =============================================
+// DATOS DEL PROYECTO — editá desde Google Sheets
+// Este archivo se reemplaza automáticamente con
+// los datos reales de tu Google Sheets
+// =============================================
+
+const DISCOS = [
+  {
+    id: 1, ep: 1,
+    name: "Revolver", artist: "The Beatles",
+    country: "Reino Unido", year: 1966,
+    genre: "Rock psicodélico", subgenre: "Psicodélico",
+    tracks: 14, duration: 35,
+    c: 9.0, k: 8.5, v: 8.0, a: 7.5,
+    citaCiegas: false, vibes: [],
+    songs: ["Taxman","Eleanor Rigby","I'm Only Sleeping","Love You To","Here, There and Everywhere","Yellow Submarine","She Said She Said","Good Day Sunshine","And Your Bird Can Sing","For No One","Doctor Robert","I Want to Tell You","Got to Get You into My Life","Tomorrow Never Knows"],
+    songScores: [9.5,10,8,7,9,6.5,8.5,7.5,7.8,8.8,7.2,8.2,8.7,10]
+  },
+  {
+    id: 2, ep: 2,
+    name: "Kind of Blue", artist: "Miles Davis",
+    country: "Estados Unidos", year: 1959,
+    genre: "Jazz modal", subgenre: "Modal Jazz",
+    tracks: 5, duration: 45,
+    c: 8.0, k: 9.0, v: 7.5, a: 8.0,
+    citaCiegas: true, vibes: ["melancólico","nocturno","intimista","contemplativo"],
+    songs: ["So What","Freddie Freeloader","Blue in Green","All Blues","Flamenco Sketches"],
+    songScores: [9.5,8.5,9,8.5,9]
+  },
+  {
+    id: 3, ep: 3,
+    name: "Rumours", artist: "Fleetwood Mac",
+    country: "Reino Unido", year: 1977,
+    genre: "Soft Rock", subgenre: "Soft Rock",
+    tracks: 11, duration: 40,
+    c: 8.5, k: 7.5, v: 8.5, a: 6.0,
+    citaCiegas: false, vibes: [],
+    songs: ["Second Hand News","Dreams","Never Going Back","The Chain","You Make Loving Fun","I Don't Want to Know","Oh Daddy","Gold Dust Woman","Go Your Own Way","Songbird","The Chain (Reprise)"],
+    songScores: [8,9.5,7.5,9,8,7.5,7,8.5,9,8.5,7]
+  },
+  {
+    id: 4, ep: 4,
+    name: "Innervisions", artist: "Stevie Wonder",
+    country: "Estados Unidos", year: 1973,
+    genre: "Funk Soul", subgenre: "Funk Soul",
+    tracks: 9, duration: 44,
+    c: 9.0, k: 8.0, v: 7.0, a: 9.0,
+    citaCiegas: true, vibes: ["psicodélico","funk","introspectivo","colorido"],
+    songs: ["Too High","Visions","Living for the City","Golden Lady","Higher Ground","Jesus Children of America","All in Love is Fair","Don't You Worry 'Bout a Thing","He's Misstra Know-It-All"],
+    songScores: [8,8.5,10,8.5,9.5,7.5,8,8.5,8]
+  },
+  {
+    id: 5, ep: 5,
+    name: "Blue", artist: "Joni Mitchell",
+    country: "Canadá", year: 1971,
+    genre: "Folk Rock", subgenre: "Folk Rock",
+    tracks: 10, duration: 36,
+    c: 8.0, k: 9.0, v: 6.5, a: 7.0,
+    citaCiegas: false, vibes: [],
+    songs: ["All I Want","My Old Man","Little Green","Carey","Blue","California","This Flight Tonight","River","A Case of You","The Last Time I Saw Richard"],
+    songScores: [8.5,8,8,8.5,9,9,7.5,9.5,10,8]
+  },
+  {
+    id: 6, ep: 6,
+    name: "Thriller", artist: "Michael Jackson",
+    country: "Estados Unidos", year: 1982,
+    genre: "Pop / R&B", subgenre: "Pop / R&B",
+    tracks: 9, duration: 42,
+    c: 8.5, k: 7.0, v: 9.0, a: 8.0,
+    citaCiegas: false, vibes: [],
+    songs: ["Wanna Be Startin' Somethin'","Baby Be Mine","The Girl Is Mine","Thriller","Beat It","Billie Jean","Human Nature","P.Y.T.","The Lady in My Life"],
+    songScores: [9,7.5,7,10,9.5,10,8,8,7.5]
+  },
+  {
+    id: 7, ep: 7,
+    name: "What's Going On", artist: "Marvin Gaye",
+    country: "Estados Unidos", year: 1971,
+    genre: "Soul / Funk", subgenre: "Soul / Funk",
+    tracks: 9, duration: 35,
+    c: 9.5, k: 9.5, v: 7.0, a: 8.0,
+    citaCiegas: true, vibes: ["espiritual","cálido","político","envolvente"],
+    songs: ["What's Going On","What's Happening Brother","Flyin' High","Save the Children","God Is Love","Mercy Mercy Me","Right On","Wholy Holy","Inner City Blues"],
+    songScores: [10,8.5,8.5,9,8.5,9.5,8,8.5,9.5]
+  },
+  {
+    id: 8, ep: 8,
+    name: "Graceland", artist: "Paul Simon",
+    country: "Estados Unidos", year: 1986,
+    genre: "World Music", subgenre: "World Music",
+    tracks: 11, duration: 42,
+    c: 7.5, k: 8.0, v: 6.5, a: 6.0,
+    citaCiegas: false, vibes: [],
+    songs: ["The Boy in the Bubble","Graceland","I Know What I Know","Gumboots","Diamonds on the Soles","You Can Call Me Al","Under African Skies","Homeless","Crazy Love Vol. II","That Was Your Mother","All Around the World"],
+    songScores: [8.5,9,7.5,7,8,9.5,8,8.5,7.5,7,8]
+  },
+  {
+    id: 9, ep: 9,
+    name: "Exodus", artist: "Bob Marley",
+    country: "Jamaica", year: 1977,
+    genre: "Roots Reggae", subgenre: "Roots Reggae",
+    tracks: 10, duration: 37,
+    c: 8.0, k: 8.5, v: 8.0, a: 7.5,
+    citaCiegas: false, vibes: [],
+    songs: ["Natural Mystic","So Much Things to Say","Guiltiness","The Heathen","Exodus","Jamming","Waiting in Vain","Turn Your Lights Down Low","Three Little Birds","One Love"],
+    songScores: [8.5,8,8,8,9.5,9,9,8.5,8.5,9]
+  },
+  {
+    id: 10, ep: 10,
+    name: "Off the Wall", artist: "Michael Jackson",
+    country: "Estados Unidos", year: 1979,
+    genre: "Disco Funk", subgenre: "Disco Funk",
+    tracks: 10, duration: 41,
+    c: 8.0, k: 7.5, v: 7.5, a: 7.0,
+    citaCiegas: true, vibes: ["bailable","festivo","elegante","groovy"],
+    songs: ["Don't Stop 'Til You Get Enough","Rock With You","Workin' Day and Night","Get on the Floor","Off the Wall","Girlfriend","She's Out of My Life","I Can't Help It","It's the Falling in Love","Burn This Disco Out"],
+    songScores: [9.5,9.5,8,8,8.5,7,8.5,7.5,7,7.5]
+  },
+];
+
+// Calcular puntuación final automáticamente
+DISCOS.forEach(d => {
+  d.score = parseFloat((d.c * 0.4 + d.k * 0.25 + d.v * 0.25 + d.a * 0.1).toFixed(2));
+});
+
+// Estado global compartido entre páginas
+const APP = {
+  selectedDisco: null,
+  setSelected(disco) {
+    this.selectedDisco = disco;
+    localStorage.setItem('selectedDisco', disco ? disco.id : null);
+  },
+  getSelected() {
+    const id = localStorage.getItem('selectedDisco');
+    return id ? DISCOS.find(d => d.id === parseInt(id)) || DISCOS[0] : DISCOS[0];
+  }
+};
+
+</script>
+<script>
+const CIEGAS = DISCOS.filter(d => d.citaCiegas);
+let current=null, progress=0, running=false, animId=null, sleeveImg=null, phase='idle';
+
+function buildSleeve(){
+  const oc=document.createElement('canvas');
+  oc.width=240; oc.height=240;
+  const c=oc.getContext('2d');
+  c.fillStyle='#0c0c0c'; c.fillRect(0,0,240,240);
+  for(let i=0;i<200;i++){
+    const x=Math.random()*240,y=Math.random()*240,len=Math.random()*55+4,angle=Math.random()*Math.PI;
+    c.strokeStyle=`rgba(${20+Math.random()*40},${15+Math.random()*30},${10+Math.random()*20},${0.15+Math.random()*0.5})`;
+    c.lineWidth=Math.random()*1.5+0.2;
+    c.beginPath();c.moveTo(x,y);c.lineTo(x+Math.cos(angle)*len,y+Math.sin(angle)*len);c.stroke();
+  }
+  const grd=c.createRadialGradient(96,132,40,96,132,110);
+  grd.addColorStop(0,'rgba(0,0,0,0)');grd.addColorStop(1,'rgba(0,0,0,0.6)');
+  c.fillStyle=grd; c.fillRect(0,0,240,240);
+  return oc;
+}
+
+function renderFrame(){
+  const ctx=document.getElementById('cv').getContext('2d');
+  ctx.clearRect(0,0,240,240);
+  const curtainTop=240*(1-progress);
+  if(curtainTop<=0) return;
+  ctx.drawImage(sleeveImg,0,curtainTop,240,240-curtainTop,0,curtainTop,240,240-curtainTop);
+  const grad=ctx.createLinearGradient(0,curtainTop-6,0,curtainTop+10);
+  grad.addColorStop(0,'rgba(0,0,0,0)');
+  grad.addColorStop(0.4,'rgba(200,140,40,0.5)');
+  grad.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=grad; ctx.fillRect(0,curtainTop-6,240,16);
+  for(let x=0;x<240;x+=4){
+    const wave=Math.sin(x*0.15+Date.now()*0.005)*2+Math.sin(x*0.08-Date.now()*0.003)*1.5;
+    ctx.fillStyle=`rgba(${200+Math.random()*55},${90+Math.random()*60},10,${0.3+Math.random()*0.5})`;
+    ctx.fillRect(x,curtainTop+wave-1,2+Math.random()*2,1+Math.random()*2);
+  }
+}
+
+function animStep(){
+  const speed=progress<0.1?0.003:progress<0.88?0.01:0.004;
+  progress=Math.min(1,progress+speed);
+  renderFrame();
+  if(progress>=1){
+    document.getElementById('cv').getContext('2d').clearRect(0,0,240,240);
+    document.getElementById('meta').classList.add('show');
+    document.getElementById('infoPanel').classList.add('show');
+    document.getElementById('rstBtn').style.display='inline-block';
+    phase='revealed'; return;
+  }
+  animId=requestAnimationFrame(animStep);
+}
+
+function pickRandom(){
+  const pool=current?CIEGAS.filter(d=>d.id!==current.id):CIEGAS;
+  return pool.length ? pool[Math.floor(Math.random()*pool.length)] : CIEGAS[0];
+}
+
+function loadDisco(d){
+  current=d;
+  document.getElementById('m-title').textContent=d.name;
+  document.getElementById('m-artist').textContent=d.artist;
+  document.getElementById('m-year').textContent=d.year;
+  document.getElementById('i-album').textContent=d.name;
+  document.getElementById('i-artist').textContent=d.artist;
+  document.getElementById('i-year').textContent=d.year;
+  document.getElementById('i-country').textContent=d.country;
+  document.getElementById('i-genre').textContent=d.genre;
+  document.getElementById('i-tracks').textContent=d.tracks;
+  document.getElementById('i-score').textContent=d.score.toFixed(2);
+  document.getElementById('vibes-row').innerHTML=d.vibes.map(v=>`<span class="vibe">${v}</span>`).join('');
+  sleeveImg=buildSleeve();
+  document.getElementById('cv').getContext('2d').drawImage(sleeveImg,0,0);
+  phase='ready';
+  document.getElementById('mainBtn').textContent='Descubrir';
+  document.getElementById('mainBtn').disabled=false;
+}
+
+function handleMain(){
+  if(phase==='idle'||phase==='revealed'){ resetSilent(); loadDisco(pickRandom()); }
+  else if(phase==='ready'){ running=true; document.getElementById('mainBtn').disabled=true; animId=requestAnimationFrame(animStep); }
+}
+
+function resetSilent(){
+  cancelAnimationFrame(animId); running=false; progress=0;
+  document.getElementById('meta').classList.remove('show');
+  document.getElementById('infoPanel').classList.remove('show');
+  document.getElementById('rstBtn').style.display='none';
+  document.getElementById('vibes-row').innerHTML='<span class="tagline">Presioná para recibir un disco al azar</span>';
+  document.getElementById('cv').getContext('2d').clearRect(0,0,240,240);
+  phase='idle';
+}
+
+function resetAll(){ resetSilent(); loadDisco(pickRandom()); }
+</script>
+</body>
+</html>
