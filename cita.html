@@ -510,15 +510,12 @@ td.final {
 
 <script>
 
-const DISCOS_URL = "https://allorigins.win/raw?url=https://docs.google.com/spreadsheets/d/e/2PACX-1vSfk4sKvpc8V6HXbxKSoQFqMEt_F2mk8v5TUAQQF7SpFoiIIitB0XSf-LVc4FT8GWTt--L89q0SPyo8/pub?gid=0&single=true&output=csv";
-const TRACKS_URL = "https://allorigins.win/raw?url=https://docs.google.com/spreadsheets/d/e/2PACX-1vSfk4sKvpc8V6HXbxKSoQFqMEt_F2mk8v5TUAQQF7SpFoiIIitB0XSf-LVc4FT8GWTt--L89q0SPyo8/pub?gid=350466150&single=true&output=csv";
+
 let DISCOS = [];
 let TRACKS = [];
 
 const APP = {
-  selectedDisco: null,
   setSelected(disco) {
-    this.selectedDisco = disco;
     try { localStorage.setItem('selectedDisco', disco ? String(disco.id) : null); } catch(e) {}
   },
   getSelected() {
@@ -544,151 +541,109 @@ function parseCSV(text) {
     const obj = {};
     headers.forEach((h,i) => obj[h] = (vals[i]||'').replace(/^"|"$/g,''));
     return obj;
-  }).filter(r => r[headers[0]] && r[headers[0]].trim());
+  }).filter(r => Object.values(r).some(v => v && v.trim()));
+}
+
+function getVal(row, ...keys) {
+  for (const k of keys) {
+    if (row[k] !== undefined && row[k] !== '') return row[k];
+  }
+  return '';
 }
 
 function mapDisco(row) {
-  const c = parseFloat(row['Punt. Canciones (40%)']||0);
-  const k = parseFloat(row['Punt. Concepto (25%)']||0);
-  const v = parseFloat(row['Punt. Visual (25%)']||0);
-  const a = parseFloat(row['Pts. Adicionales (10%)']||0);
-  const ciegas = (row['Cita a Ciegas (Sí/No)']||'').toLowerCase();
+  const c = parseFloat(getVal(row,'Punt. Canciones (40%)')||0);
+  const k = parseFloat(getVal(row,'Punt. Concepto (25%)')||0);
+  const v = parseFloat(getVal(row,'Punt. Visual (25%)')||0);
+  const a = parseFloat(getVal(row,'Pts. Adicionales (10%)')||0);
+  // Find cita a ciegas column regardless of accent
+  const ciegasKey = Object.keys(row).find(k => k.toLowerCase().includes('cita')) || '';
+  const ciegas = (row[ciegasKey]||'').toLowerCase();
+  // Find album column
+  const albumKey = Object.keys(row).find(k => k.toLowerCase().includes('lbum')) || 'Album';
+  // Find country column
+  const countryKey = Object.keys(row).find(k => k.toLowerCase().includes('pa')) || 'Pais';
+  // Find year column
+  const yearKey = Object.keys(row).find(k => k.toLowerCase().includes('o') && k.length <= 4) || 'Ano';
+  // Find genre column
+  const genreKey = Object.keys(row).find(k => k.toLowerCase().includes('nero') && !k.toLowerCase().includes('sub')) || 'Genero';
+  // Find subgenre column
+  const subKey = Object.keys(row).find(k => k.toLowerCase().includes('sub')) || 'Subgenero';
+  // Find duration column
+  const durKey = Object.keys(row).find(k => k.toLowerCase().includes('dur')) || 'Duracion';
+  
   return {
-    id: parseInt(row['ID']||0),
-    ep: parseInt(row['Episodio #']||0),
-    name: row['Álbum']||'',
-    artist: row['Artista']||'',
-    country: row['País']||'',
-    year: parseInt(row['Año']||0),
-    genre: row['Género']||'',
-    subgenre: row['Subgénero']||'',
-    tracks: parseInt(row['Tracks']||0),
-    duration: parseInt(row['Duración (min)']||0),
+    id: parseInt(getVal(row,'ID','id')||0),
+    ep: parseInt(getVal(row,'Episodio #','ep')||0),
+    name: row[albumKey]||'',
+    artist: getVal(row,'Artista','artist')||'',
+    country: row[countryKey]||'',
+    year: parseInt(row[yearKey]||0),
+    genre: row[genreKey]||'',
+    subgenre: row[subKey]||'',
+    tracks: parseInt(getVal(row,'Tracks')||0),
+    duration: parseInt(row[durKey]||0),
     c, k, v, a,
     score: parseFloat((c*0.4+k*0.25+v*0.25+a*0.1).toFixed(2)),
-    citaCiegas: ciegas==='sí'||ciegas==='si',
-    vibes: (row['Vibes / Tags']||'').split(',').map(x=>x.trim()).filter(Boolean),
-    cover: row['Link Album']||'',
+    citaCiegas: ciegas==='si' || ciegas==='sí',
+    vibes: (getVal(row,'Vibes / Tags','vibes')||'').split(',').map(x=>x.trim()).filter(Boolean),
+    cover: getVal(row,'Link Album','cover')||'',
     songs: [], songScores: []
   };
 }
 
 function mapTrack(row) {
+  const nameKey = Object.keys(row).find(k => k.toLowerCase().includes('nombre')) || 'Nombre del Track';
   return {
-    discoId: parseInt(row['ID Disco']||0),
-    num: parseInt(row['# Track']||0),
-    name: row['Nombre del Track']||'',
-    score: parseFloat(row['Puntaje (1-10)']||0)
+    discoId: parseInt(getVal(row,'ID Disco','discoId')||0),
+    num: parseInt(getVal(row,'# Track','num')||0),
+    name: row[nameKey]||'',
+    score: parseFloat(getVal(row,'Puntaje (1-10)','score')||0)
   };
 }
 
+async function fetchCSV(url) {
+  const proxies = [
+    `https://corsproxy.io/?${encodeURIComponent(url)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+    url
+  ];
+  for (const proxy of proxies) {
+    try {
+      const r = await fetch(proxy);
+      if (r.ok) {
+        const text = await r.text();
+        if (text && !text.includes('error')) return text;
+      }
+    } catch(e) { continue; }
+  }
+  throw new Error('No se pudo cargar el CSV');
+}
+
 async function loadData() {
-  const [dr, tr] = await Promise.all([fetch(DISCOS_URL), fetch(TRACKS_URL)]);
-  const [dc, tc] = await Promise.all([dr.text(), tr.text()]);
-  DISCOS = parseCSV(dc).map(mapDisco);
-  TRACKS = parseCSV(tc).map(mapTrack);
-  DISCOS.forEach(d => {
-    const t = TRACKS.filter(x=>x.discoId===d.id).sort((a,b)=>a.num-b.num);
-    d.songs = t.map(x=>x.name);
-    d.songScores = t.map(x=>x.score);
-  });
-}
-
-</script>
-<script>
-const CIEGAS = DISCOS.filter(d => d.citaCiegas);
-let current=null, progress=0, running=false, animId=null, sleeveImg=null, phase='idle';
-
-function buildSleeve(){
-  const oc=document.createElement('canvas');
-  oc.width=240; oc.height=240;
-  const c=oc.getContext('2d');
-  c.fillStyle='#0c0c0c'; c.fillRect(0,0,240,240);
-  for(let i=0;i<200;i++){
-    const x=Math.random()*240,y=Math.random()*240,len=Math.random()*55+4,angle=Math.random()*Math.PI;
-    c.strokeStyle=`rgba(${20+Math.random()*40},${15+Math.random()*30},${10+Math.random()*20},${0.15+Math.random()*0.5})`;
-    c.lineWidth=Math.random()*1.5+0.2;
-    c.beginPath();c.moveTo(x,y);c.lineTo(x+Math.cos(angle)*len,y+Math.sin(angle)*len);c.stroke();
-  }
-  const grd=c.createRadialGradient(96,132,40,96,132,110);
-  grd.addColorStop(0,'rgba(0,0,0,0)');grd.addColorStop(1,'rgba(0,0,0,0.6)');
-  c.fillStyle=grd; c.fillRect(0,0,240,240);
-  return oc;
-}
-
-function renderFrame(){
-  const ctx=document.getElementById('cv').getContext('2d');
-  ctx.clearRect(0,0,240,240);
-  const curtainTop=240*(1-progress);
-  if(curtainTop<=0) return;
-  ctx.drawImage(sleeveImg,0,curtainTop,240,240-curtainTop,0,curtainTop,240,240-curtainTop);
-  const grad=ctx.createLinearGradient(0,curtainTop-6,0,curtainTop+10);
-  grad.addColorStop(0,'rgba(0,0,0,0)');
-  grad.addColorStop(0.4,'rgba(200,140,40,0.5)');
-  grad.addColorStop(1,'rgba(0,0,0,0)');
-  ctx.fillStyle=grad; ctx.fillRect(0,curtainTop-6,240,16);
-  for(let x=0;x<240;x+=4){
-    const wave=Math.sin(x*0.15+Date.now()*0.005)*2+Math.sin(x*0.08-Date.now()*0.003)*1.5;
-    ctx.fillStyle=`rgba(${200+Math.random()*55},${90+Math.random()*60},10,${0.3+Math.random()*0.5})`;
-    ctx.fillRect(x,curtainTop+wave-1,2+Math.random()*2,1+Math.random()*2);
+  try {
+    const DISCOS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSfk4sKvpc8V6HXbxKSoQFqMEt_F2mk8v5TUAQQF7SpFoiIIitB0XSf-LVc4FT8GWTt--L89q0SPyo8/pub?gid=0&single=true&output=csv";
+    const TRACKS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSfk4sKvpc8V6HXbxKSoQFqMEt_F2mk8v5TUAQQF7SpFoiIIitB0XSf-LVc4FT8GWTt--L89q0SPyo8/pub?gid=350466150&single=true&output=csv";
+    
+    const [discosCsv, tracksCsv] = await Promise.all([
+      fetchCSV(DISCOS_URL),
+      fetchCSV(TRACKS_URL)
+    ]);
+    
+    DISCOS = parseCSV(discosCsv).map(mapDisco).filter(d => d.id > 0 && d.name);
+    TRACKS = parseCSV(tracksCsv).map(mapTrack).filter(t => t.discoId > 0 && t.name);
+    
+    DISCOS.forEach(d => {
+      const t = TRACKS.filter(x=>x.discoId===d.id).sort((a,b)=>a.num-b.num);
+      d.songs = t.map(x=>x.name);
+      d.songScores = t.map(x=>x.score);
+    });
+    return true;
+  } catch(e) {
+    console.error('Error cargando datos:', e);
+    return false;
   }
 }
-
-function animStep(){
-  const speed=progress<0.1?0.003:progress<0.88?0.01:0.004;
-  progress=Math.min(1,progress+speed);
-  renderFrame();
-  if(progress>=1){
-    document.getElementById('cv').getContext('2d').clearRect(0,0,240,240);
-    document.getElementById('meta').classList.add('show');
-    document.getElementById('infoPanel').classList.add('show');
-    document.getElementById('rstBtn').style.display='inline-block';
-    phase='revealed'; return;
-  }
-  animId=requestAnimationFrame(animStep);
-}
-
-function pickRandom(){
-  const pool=current?CIEGAS.filter(d=>d.id!==current.id):CIEGAS;
-  return pool.length ? pool[Math.floor(Math.random()*pool.length)] : CIEGAS[0];
-}
-
-function loadDisco(d){
-  current=d;
-  document.getElementById('m-title').textContent=d.name;
-  document.getElementById('m-artist').textContent=d.artist;
-  document.getElementById('m-year').textContent=d.year;
-  document.getElementById('i-album').textContent=d.name;
-  document.getElementById('i-artist').textContent=d.artist;
-  document.getElementById('i-year').textContent=d.year;
-  document.getElementById('i-country').textContent=d.country;
-  document.getElementById('i-genre').textContent=d.genre;
-  document.getElementById('i-tracks').textContent=d.tracks;
-  document.getElementById('i-score').textContent=d.score.toFixed(2);
-  document.getElementById('vibes-row').innerHTML=d.vibes.map(v=>`<span class="vibe">${v}</span>`).join('');
-  sleeveImg=buildSleeve();
-  document.getElementById('cv').getContext('2d').drawImage(sleeveImg,0,0);
-  phase='ready';
-  document.getElementById('mainBtn').textContent='Descubrir';
-  document.getElementById('mainBtn').disabled=false;
-}
-
-function handleMain(){
-  if(phase==='idle'||phase==='revealed'){ resetSilent(); loadDisco(pickRandom()); }
-  else if(phase==='ready'){ running=true; document.getElementById('mainBtn').disabled=true; animId=requestAnimationFrame(animStep); }
-}
-
-function resetSilent(){
-  cancelAnimationFrame(animId); running=false; progress=0;
-  document.getElementById('meta').classList.remove('show');
-  document.getElementById('infoPanel').classList.remove('show');
-  document.getElementById('rstBtn').style.display='none';
-  document.getElementById('vibes-row').innerHTML='<span class="tagline">Presioná para recibir un disco al azar</span>';
-  document.getElementById('cv').getContext('2d').clearRect(0,0,240,240);
-  phase='idle';
-}
-
-function resetAll(){ resetSilent(); loadDisco(pickRandom()); }
 
 loadData().then(() => {
   document.getElementById('loading').style.display = 'none';
