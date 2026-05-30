@@ -683,7 +683,79 @@ async function loadData() {
 
 loadData().then(() => {
   document.getElementById('loading').style.display = 'none';
-  current = APP.getSelected();
+  current = DISCOS[0];
+  buildTop();
+  updateCard(current);
+});
+
+
+const sorted_ref = () => [...DISCOS].sort((a,b) => b.score - a.score);
+let current = null;
+
+const AXES = [[0,-60],[51.9,-19],[32.1,49.9],[-32.1,49.9],[-51.9,-19]];
+
+function updateRadar(d) {
+  const vals = [d.c/10, d.k/10, d.v/10, d.a/10, Math.min(d.duration/60, 1)];
+  const pts = AXES.map(([ax,ay],i) => `${ax*vals[i]},${ay*vals[i]}`).join(' ');
+  document.getElementById('radar-poly').setAttribute('points', pts);
+  AXES.forEach(([ax,ay],i) => {
+    document.getElementById('r'+i).setAttribute('cx', ax*vals[i]);
+    document.getElementById('r'+i).setAttribute('cy', ay*vals[i]);
+  });
+}
+
+function updateCard(d) {
+  current = d;
+  APP.setSelected(d);
+  document.getElementById('c-name').textContent = d.name;
+  document.getElementById('c-artist').textContent = d.artist;
+  document.getElementById('c-year').textContent = d.year;
+  document.getElementById('c-country').textContent = d.country;
+  document.getElementById('c-genre').textContent = d.genre;
+  document.getElementById('c-tracks').textContent = d.tracks;
+  document.getElementById('c-duration').textContent = d.duration + ' min';
+  document.getElementById('c-ep').textContent = '#' + d.ep;
+  document.getElementById('c-score').textContent = d.score.toFixed(2);
+  document.getElementById('b-c').style.width = (d.c*10)+'%';
+  document.getElementById('b-k').style.width = (d.k*10)+'%';
+  document.getElementById('b-v').style.width = (d.v*10)+'%';
+  document.getElementById('b-a').style.width = (d.a*10)+'%';
+  document.getElementById('v-c').textContent = d.c.toFixed(1);
+  document.getElementById('v-k').textContent = d.k.toFixed(1);
+  document.getElementById('v-v').textContent = d.v.toFixed(1);
+  document.getElementById('v-a').textContent = d.a.toFixed(1);
+  const coverEl = document.getElementById('cover');
+  if (d.cover) {
+    coverEl.innerHTML = '<img src="' + d.cover + '" alt="' + d.name + '" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML=\'<i class=\\\"ti ti-vinyl\\\"></i>\'">';
+  } else {
+    coverEl.innerHTML = '<i class="ti ti-vinyl" aria-hidden="true"></i>';
+  }
+  updateRadar(d);
+  document.getElementById('tracks-col').innerHTML = d.songs.map((s,i) => `
+    <div class="track">
+      <span class="track-num">${i+1}</span>
+      <span class="track-name" title="${s}">${s}</span>
+      <div class="track-bar-wrap"><div class="track-bar" style="width:${(d.songScores[i]||0)*10}%"></div></div>
+      <span class="track-val">${(d.songScores[i]||0).toFixed(1)}</span>
+    </div>`).join('');
+  document.querySelectorAll('.top-row').forEach(r => r.classList.toggle('active', r.dataset.id === String(d.id)));
+}
+
+function buildTop() {
+  const sorted = sorted_ref();
+  document.getElementById('top-list').innerHTML = sorted.slice(0,10).map((d,i) => `
+    <div class="top-row${d.id === (current&&current.id) ? ' active':''}" data-id="${d.id}" onclick="updateCard(DISCOS.find(x=>x.id===${d.id}))">
+      <span class="top-num">${i+1}</span>
+      <span class="top-name">${d.name}</span>
+      <span class="top-artist">${d.artist}</span>
+      <div class="top-bar-wrap"><div class="top-bar" style="width:${Math.round(d.score/sorted[0].score*100)}%"></div></div>
+      <span class="top-val">${d.score.toFixed(2)}</span>
+    </div>`).join('');
+}
+
+loadData().then(() => {
+  document.getElementById('loading').style.display = 'none';
+  current = DISCOS[0];
   buildTop();
   updateCard(current);
 });
