@@ -547,8 +547,13 @@ function parseCSV(text) {
   }).filter(r => Object.values(r).some(v => v && v.trim()));
 }
 
+function normalizeStr(s) {
+  return (s == null ? '' : String(s)).normalize('NFD').replace(/\p{Mn}/gu,'').toLowerCase().trim();
+}
+
 function getKey(row, part) {
-  const key = Object.keys(row).find(k => k.toLowerCase().includes(part.toLowerCase()));
+  const np = normalizeStr(part);
+  const key = Object.keys(row).find(k => normalizeStr(k).includes(np));
   return key ? row[key] : '';
 }
 
@@ -557,18 +562,18 @@ function mapDisco(row) {
   const k = parseFloat(getKey(row,'Concepto')||0);
   const v = parseFloat(getKey(row,'Visual')||0);
   const a = parseFloat(getKey(row,'Adicionales')||0);
-  const ciegas = (getKey(row,'Cita')||'').toLowerCase();
+  const ciegas = normalizeStr(getKey(row,'Cita'));
   return {
     id: parseInt(getKey(row,'ID')||0),
     ep: parseInt(getKey(row,'Episodio')||0),
-    name: getKey(row,'lbum')||'',
+    name: getKey(row,'Album')||'',
     artist: getKey(row,'Artista')||'',
-    country: getKey(row,'Pa')||'',
-    year: parseInt(getKey(row,'o')||0),
-    genre: getKey(row,'nero')||'',
-    subgenre: getKey(row,'Sub')||'',
+    country: getKey(row,'Pais')||'',
+    year: parseInt(getKey(row,'Ano')||0),
+    genre: getKey(row,'Genero')||'',
+    subgenre: getKey(row,'Subgenero')||'',
     tracks: parseInt(getKey(row,'Tracks')||0),
-    duration: parseInt(getKey(row,'Dur')||0),
+    duration: parseInt(getKey(row,'Duracion')||0),
     c, k, v, a,
     score: parseFloat((c*0.4+k*0.25+v*0.25+a*0.1).toFixed(2)),
     citaCiegas: ciegas.includes('si'),
