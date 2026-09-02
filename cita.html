@@ -626,28 +626,21 @@ function mapTrack(row) {
 }
 
 async function loadData() {
-  // Carga instantánea con datos locales — nunca se queda trabado
+  // Arranca con los datos de respaldo — nunca se queda trabado
   DISCOS = JSON.parse(JSON.stringify(FALLBACK_DISCOS));
 
-  // Intenta actualizar desde Google Sheets en background
-  const DISCOS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRSq9O2tPGd3sBaMwvNbroBNVmK9wRagXypMiqEJFoPQPV28vA7d7m0vs4T-ZU6VYjNF417Y8VwNEVz/pub?gid=0&single=true&output=csv";
-  const TRACKS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRSq9O2tPGd3sBaMwvNbroBNVmK9wRagXypMiqEJFoPQPV28vA7d7m0vs4T-ZU6VYjNF417Y8VwNEVz/pub?gid=1908540884&single=true&output=csv";
-  const proxies = [
-    url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-    url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-  ];
-
-  setTimeout(async () => {
-    for (const proxy of proxies) {
-      try {
-        const [dr, tr] = await Promise.all([
-          fetch(proxy(DISCOS_URL), {signal: AbortSignal.timeout(6000)}),
-          fetch(proxy(TRACKS_URL), {signal: AbortSignal.timeout(6000)})
-        ]);
-        if (!dr.ok) continue;
-        const [dc, tc] = await Promise.all([dr.text(), tr.text()]);
-        const newDiscos = parseCSV(dc).map(mapDisco).filter(d => d.id > 0 && d.name);
-        if (newDiscos.length === 0) continue;
+  // Intenta traer la planilla real vía nuestra propia función serverless
+  // (/api/sheet), sin depender de proxies de terceros. Si tarda más de
+  // 5s o falla, se sigue mostrando con los datos de respaldo.
+  try {
+    const [dr, tr] = await Promise.all([
+      fetch('/api/sheet?which=disco', {signal: AbortSignal.timeout(5000)}),
+      fetch('/api/sheet?which=track', {signal: AbortSignal.timeout(5000)})
+    ]);
+    if (dr.ok && tr.ok) {
+      const [dc, tc] = await Promise.all([dr.text(), tr.text()]);
+      const newDiscos = parseCSV(dc).map(mapDisco).filter(d => d.id > 0 && d.name);
+      if (newDiscos.length > 0) {
         const newTracks = parseCSV(tc).map(mapTrack).filter(t => t.discoId > 0);
         newDiscos.forEach(d => {
           const t = newTracks.filter(x=>x.discoId===d.id).sort((a,b)=>a.num-b.num);
@@ -655,11 +648,10 @@ async function loadData() {
         });
         DISCOS = newDiscos;
         TRACKS = newTracks;
-        console.log('Sheets actualizado OK');
-        break;
-      } catch(e) { continue; }
+        console.log('Planilla actualizada OK');
+      }
     }
-  }, 200);
+  } catch(e) { /* se queda con los datos de respaldo */ }
 
   return true;
 }
