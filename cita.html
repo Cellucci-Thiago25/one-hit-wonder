@@ -437,8 +437,8 @@ td.final {
   grid-template-columns: clamp(180px, 20vw, 250px) 1fr;
   gap: var(--sp-md);
 }
-.left-card { min-height: 0; }
-.card-info { flex: 1; min-height: 0; overflow-y: auto; }
+.left-card { min-height: 0; align-self: start; }
+.card-info { flex: none; min-height: 0; overflow-y: auto; }
 .right-col { min-height: 0; display: flex; flex-direction: column; gap: var(--sp-sm); }
 .panel-dark { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
 .panel-warm { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
@@ -447,10 +447,6 @@ td.final {
 .top-list::-webkit-scrollbar-thumb { background: var(--naranja); border-radius: 2px; }
 .analysis-wrap { flex: 1; min-height: 0; overflow: hidden; }
 .tracks-col { max-height: 100%; overflow-y: auto; }
-
-@media (max-width: 860px) {
-  .page-grid { grid-template-columns: 1fr; }
-}
 
 .loading-screen { position: fixed; inset: 0; background: var(--naranja); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--sp-sm); z-index: 999; }
 .loading-title { font-family: 'Playfair Display', serif; font-size: var(--fs-xl); color: #F2EDE4; }
@@ -468,14 +464,27 @@ td.final {
     .vibe::before { content: "+ "; color: var(--texto-muted); }
     .tagline { font-size: var(--fs-base); color: var(--texto-terciario); font-style: italic; font-family: 'Playfair Display', serif; text-align: center; }
     .stage { position: relative; width: clamp(170px, 55vw, 260px); height: clamp(170px, 55vw, 260px); border-radius: 12px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.25); flex-shrink: 0; }
-    .album-back { position: absolute; inset: 0; background: var(--negro); display: flex; align-items: center; justify-content: center; }
-    .album-meta { text-align: center; display: flex; flex-direction: column; gap: 6px; opacity: 0; transition: opacity 1s ease 0.2s; padding: var(--sp-lg); }
+    .album-back { position: absolute; inset: 0; background: var(--negro); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .album-cover-img { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 0; transform: scale(1.08); transition: opacity 1.1s ease 0.15s, transform 5s ease; }
+    .album-cover-img.show { opacity: 1; transform: scale(1); }
+    .album-meta { position: relative; z-index: 1; text-align: center; display: flex; flex-direction: column; gap: 6px; opacity: 0; transition: opacity 1s ease 0.2s; padding: var(--sp-md) var(--sp-lg); background: rgba(10,8,6,0.4); border-radius: 14px; backdrop-filter: blur(1.5px); }
     .album-meta.show { opacity: 1; }
     .album-title { font-family: 'Playfair Display', serif; font-size: var(--fs-xl); color: var(--beige); }
-    .album-artist { font-size: var(--fs-sm); color: #8A847C; letter-spacing: 2px; text-transform: uppercase; }
-    .album-year { font-size: var(--fs-xs); color: #5a4a3a; letter-spacing: 3px; }
-    .divider-line { width: 24px; height: 0.5px; background: #3a3030; margin: 0 auto; }
-    canvas { position: absolute; inset: 0; pointer-events: none; }
+    .album-artist { font-size: var(--fs-sm); color: #cabfb5; letter-spacing: 2px; text-transform: uppercase; }
+    .album-year { font-size: var(--fs-xs); color: #b8ada2; letter-spacing: 3px; }
+    .divider-line { width: 24px; height: 0.5px; background: #6a5f52; margin: 0 auto; }
+    .wrap-cover {
+      position: absolute; inset: 0; z-index: 2;
+      display: flex; align-items: center; justify-content: center;
+      background: repeating-linear-gradient(135deg, var(--naranja) 0px, var(--naranja) 16px, var(--naranja-oscuro) 16px, var(--naranja-oscuro) 32px);
+      transition: transform 0.7s cubic-bezier(0.6,-0.28,0.74,0.05), opacity 0.55s ease 0.05s;
+    }
+    .wrap-cover.opening { transform: scale(1.5) rotate(10deg); opacity: 0; pointer-events: none; }
+    .wrap-cover.hidden { display: none; }
+    .wrap-cover-inner { display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--beige); }
+    .wrap-cover-icon { width: clamp(34px, 9vw, 54px); height: clamp(34px, 9vw, 54px); }
+    .wrap-cover-lbl { font-size: var(--fs-2xs); letter-spacing: 2px; text-transform: uppercase; font-weight: 600; }
+    canvas { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
     .btn-row { display: flex; gap: var(--sp-sm); flex-wrap: wrap; justify-content: center; }
     .info-panel {
       background: var(--beige);
@@ -531,11 +540,24 @@ td.final {
 
       <div class="stage">
         <div class="album-back">
+          <div class="album-cover-img" id="album-cover-img"></div>
           <div class="album-meta" id="meta">
             <div class="album-title" id="m-title"></div>
             <div class="divider-line"></div>
             <div class="album-artist" id="m-artist"></div>
             <div class="album-year" id="m-year"></div>
+          </div>
+        </div>
+        <div class="wrap-cover" id="wrapCover">
+          <div class="wrap-cover-inner">
+            <svg class="wrap-cover-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <circle cx="24" cy="24" r="22" fill="#1A1A1A" stroke="rgba(242,237,228,0.5)" stroke-width="1.5"/>
+              <circle cx="24" cy="24" r="16" fill="none" stroke="rgba(242,237,228,0.18)" stroke-width="1"/>
+              <circle cx="24" cy="24" r="11" fill="none" stroke="rgba(242,237,228,0.18)" stroke-width="1"/>
+              <circle cx="24" cy="24" r="6.5" fill="#D45E2A"/>
+              <circle cx="24" cy="24" r="2" fill="#1A1A1A"/>
+            </svg>
+            <span class="wrap-cover-lbl">Disco sorpresa</span>
           </div>
         </div>
         <canvas id="cv" width="240" height="240"></canvas>
@@ -713,6 +735,145 @@ async function loadData() {
   return true;
 }
 
+
+/* =============================================
+   CITA A CIEGAS: revelado del disco sorpresa
+   ============================================= */
+let busy = false;
+
+function renderVibes(d) {
+  const row = document.getElementById('vibes-row');
+  row.innerHTML = '';
+  if (d.vibes && d.vibes.length) {
+    d.vibes.forEach(v => {
+      const span = document.createElement('span');
+      span.className = 'vibe';
+      span.textContent = v;
+      row.appendChild(span);
+    });
+  }
+}
+
+function fillInfo(d) {
+  document.getElementById('m-title').textContent = d.name;
+  document.getElementById('m-artist').textContent = d.artist;
+  document.getElementById('m-year').textContent = d.year || '';
+
+  document.getElementById('i-album').textContent = d.name;
+  document.getElementById('i-artist').textContent = d.artist;
+  document.getElementById('i-year').textContent = d.year || '—';
+  document.getElementById('i-country').textContent = d.country || '—';
+  document.getElementById('i-genre').textContent = d.genre || '—';
+  document.getElementById('i-tracks').textContent = d.tracks || '—';
+  document.getElementById('i-score').textContent = d.score.toFixed(2);
+
+  const coverEl = document.getElementById('album-cover-img');
+  coverEl.style.backgroundImage = d.cover ? 'url("' + d.cover + '")' : 'none';
+
+  renderVibes(d);
+}
+
+function burstConfetti() {
+  const canvas = document.getElementById('cv');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const colors = ['#D45E2A', '#E8896A', '#F2EDE4', '#B84D1F'];
+  const cx = W / 2, cy = H / 2;
+  const particles = [];
+  const n = 46;
+  for (let i = 0; i < n; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 2 + Math.random() * 5.5;
+    particles.push({
+      x: cx, y: cy,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 1.5,
+      size: 2 + Math.random() * 4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rot: Math.random() * Math.PI,
+      vr: (Math.random() - 0.5) * 0.3
+    });
+  }
+  const gravity = 0.12;
+  const duration = 900;
+  const start = performance.now();
+
+  function frame(now) {
+    const t = now - start;
+    ctx.clearRect(0, 0, W, H);
+    const life = Math.max(0, 1 - t / duration);
+    particles.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += gravity;
+      p.rot += p.vr;
+      ctx.save();
+      ctx.globalAlpha = life;
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+      ctx.restore();
+    });
+    if (t < duration) requestAnimationFrame(frame);
+    else ctx.clearRect(0, 0, W, H);
+  }
+  requestAnimationFrame(frame);
+}
+
+function reveal(d) {
+  fillInfo(d);
+
+  const wrap = document.getElementById('wrapCover');
+  wrap.classList.add('opening');
+  burstConfetti();
+
+  document.getElementById('album-cover-img').classList.add('show');
+  document.getElementById('meta').classList.add('show');
+  document.getElementById('infoPanel').classList.add('show');
+
+  document.getElementById('mainBtn').style.display = 'none';
+  const rst = document.getElementById('rstBtn');
+  rst.style.display = '';
+  rst.disabled = false;
+
+  setTimeout(() => {
+    wrap.classList.add('hidden');
+    busy = false;
+  }, 760);
+}
+
+function pickAndReveal() {
+  if (!DISCOS.length) return;
+  const pool = DISCOS.filter(d => d.citaCiegas);
+  const list = pool.length ? pool : DISCOS;
+  const d = list[Math.floor(Math.random() * list.length)];
+  reveal(d);
+}
+
+function handleMain() {
+  if (busy) return;
+  busy = true;
+  pickAndReveal();
+}
+
+function resetAll() {
+  if (busy) return;
+  busy = true;
+
+  document.getElementById('meta').classList.remove('show');
+  document.getElementById('album-cover-img').classList.remove('show');
+  document.getElementById('infoPanel').classList.remove('show');
+
+  const wrap = document.getElementById('wrapCover');
+  wrap.classList.remove('hidden');
+  wrap.style.transition = 'none';
+  wrap.classList.remove('opening');
+  void wrap.offsetWidth; // fuerza reflow para poder re-animar
+  wrap.style.transition = '';
+
+  setTimeout(pickAndReveal, 260);
+}
 
 loadData().then(() => {
   document.getElementById('loading').style.display = 'none';

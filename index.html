@@ -437,8 +437,8 @@ td.final {
   grid-template-columns: clamp(180px, 20vw, 250px) 1fr;
   gap: var(--sp-md);
 }
-.left-card { min-height: 0; }
-.card-info { flex: 1; min-height: 0; overflow-y: auto; }
+.left-card { min-height: 0; align-self: start; }
+.card-info { flex: none; min-height: 0; overflow-y: auto; }
 .right-col { min-height: 0; display: flex; flex-direction: column; gap: var(--sp-sm); }
 .panel-dark { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
 .panel-warm { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
@@ -447,10 +447,6 @@ td.final {
 .top-list::-webkit-scrollbar-thumb { background: var(--naranja); border-radius: 2px; }
 .analysis-wrap { flex: 1; min-height: 0; overflow: hidden; }
 .tracks-col { max-height: 100%; overflow-y: auto; }
-
-@media (max-width: 860px) {
-  .page-grid { grid-template-columns: 1fr; }
-}
 
 .loading-screen { position: fixed; inset: 0; background: var(--naranja); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--sp-sm); z-index: 999; }
 .loading-title { font-family: 'Playfair Display', serif; font-size: var(--fs-xl); color: #F2EDE4; }
@@ -463,8 +459,8 @@ td.final {
   <style>
     .page-grid { display: grid; grid-template-columns: clamp(200px, 22vw, 280px) 1fr; gap: var(--sp-md); flex: 1; }
     .left-card { background: var(--beige); border-radius: var(--radio); overflow: hidden; display: flex; flex-direction: column; }
-    .cover { width: 100%; aspect-ratio: 1; background: var(--negro); display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; }
-    .cover img { width: 100%; height: 100%; object-fit: cover; }
+    .cover { position: relative; width: 100%; aspect-ratio: 1; background: var(--negro); display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; }
+    .cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
     .cover i { font-size: clamp(32px, 3vw, 52px); color: #3a3a3a; }
     .card-info { padding: var(--sp-md); display: flex; flex-direction: column; gap: var(--sp-xs); overflow-y: auto; }
     .card-info::-webkit-scrollbar { width: 3px; }
@@ -501,9 +497,9 @@ td.final {
     .top-row.active .top-bar-wrap { background: #333; }
     .top-val { font-size: var(--fs-sm); font-weight: 600; color: var(--naranja-oscuro); width: 28px; text-align: right; flex-shrink: 0; font-family: 'Playfair Display', serif; }
     .top-row.active .top-val { color: var(--naranja-claro); }
-    .analysis-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-md); align-items: center; }
+    .analysis-wrap { display: grid; grid-template-columns: 1.3fr 1fr; gap: var(--sp-md); align-items: center; }
     .radar-center { display: flex; flex-direction: column; align-items: center; justify-content: center; }
-    #radar-svg { width: 100%; max-width: 200px; height: auto; }
+    #radar-svg { width: 100%; max-width: 340px; height: auto; }
     .tracks-col { display: flex; flex-direction: column; gap: 4px; max-height: min(32vh, 220px); overflow-y: auto; padding-right: 4px; }
     .tracks-col::-webkit-scrollbar { width: 3px; }
     .tracks-col::-webkit-scrollbar-track { background: var(--beige-borde); border-radius: 2px; }
@@ -516,9 +512,10 @@ td.final {
     .track-val { font-size: var(--fs-2xs); font-weight: 500; color: var(--texto-terciario); width: 22px; text-align: right; flex-shrink: 0; }
 
     @media (max-width: 860px) {
-      .left-card { flex-direction: row; }
+      .page-grid { grid-template-columns: 1fr; }
+      .left-card { flex-direction: row; align-items: flex-start; }
       .cover { width: clamp(110px, 32vw, 180px); aspect-ratio: 1; flex-shrink: 0; }
-      .card-info { overflow-y: visible; }
+      .card-info { flex: 1; overflow-y: visible; }
     }
     @media (max-width: 560px) {
       .left-card { flex-direction: column; }
@@ -804,7 +801,7 @@ function updateCard(d) {
   document.getElementById('v-a').textContent = d.a.toFixed(1);
   const coverEl = document.getElementById('cover');
   if (d.cover) {
-    coverEl.innerHTML = '<img src="' + d.cover + '" alt="' + d.name + '" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML=\'<i class=\\\"ti ti-vinyl\\\"></i>\'">';
+    coverEl.innerHTML = '<img src="' + d.cover + '" alt="' + d.name + '" onerror="this.parentElement.innerHTML=\'<i class=\\\"ti ti-vinyl\\\"></i>\'">';
   } else {
     coverEl.innerHTML = '<i class="ti ti-vinyl" aria-hidden="true"></i>';
   }
